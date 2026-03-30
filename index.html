@@ -45,6 +45,11 @@
             border: 2px solid #3498db;
             text-align: center;
             box-shadow: 0 0 30px rgba(52, 152, 219, 0.3);
+            transform: rotate(-90deg);
+        }
+
+        #game-over .menu-content {
+            transform: rotate(-90deg) translateY(50%);
         }
 
         input {
@@ -76,21 +81,22 @@
 
         #ui {
             position: absolute;
-            top: 20px;
-            left: 20px;
-            color: white;
-            font-size: 20px;
+            top: 50%;
+            left: 15px;
+            transform: translateY(-50%) rotate(-90deg);
+            color: #f1c40f; /* 醒目的金黄色 */
+            font-size: 24px; /* 加大字号 */
             font-weight: bold;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
             pointer-events: none;
             z-index: 50;
         }
 
-        /* 摇杆固定在左侧偏下 */
+        /* 摇杆固定在右下角 (等距) */
         #joystick-container {
             position: fixed;
-            bottom: 60px; /* 距离底部 60px */
-            left: 100px;  /* 距离左侧 100px */
+            bottom: 40px;
+            right: 40px;
             width: 140px;
             height: 140px;
             background: rgba(255, 255, 255, 0.1);
@@ -111,11 +117,11 @@
             transform: translate(-50%, -50%);
         }
 
-        /* 加速按钮固定在右侧偏下 */
+        /* 加速按钮固定在右上角 (等距) */
         #boost-btn {
             position: fixed;
-            bottom: 80px; /* 距离底部 80px */
-            right: 100px; /* 距离右侧 100px */
+            top: 40px;
+            right: 40px;
             width: 80px;
             height: 80px;
             background: rgba(241, 196, 15, 0.3);
@@ -138,32 +144,9 @@
         #game-over {
             display: none;
         }
-
-        /* 强制横屏提示 */
-        @media screen and (orientation: portrait) {
-            #landscape-msg {
-                display: flex;
-            }
-        }
-        @media screen and (orientation: landscape) {
-            #landscape-msg {
-                display: none;
-            }
-        }
-        #landscape-msg {
-            background: #111;
-            z-index: 200;
-            text-align: center;
-            padding: 20px;
-        }
     </style>
 </head>
 <body>
-    <div id="landscape-msg" class="overlay" style="display: none;">
-        <div style="font-size: 50px; margin-bottom: 20px;">🔄</div>
-        <p>请旋转手机至横屏模式以获得最佳体验</p>
-    </div>
-
     <div id="start-screen" class="overlay">
         <div class="menu-content">
             <h1 style="color: #3498db; margin-top: 0;">球球大作战</h1>
@@ -223,8 +206,6 @@
 
         // 摇杆控制变量
         let joystickActive = false;
-        let joystickCenterX = 0;
-        let joystickCenterY = 0;
         let moveX = 0;
         let moveY = 0; 
         const JOYSTICK_MAX_RADIUS = 60;
@@ -259,7 +240,6 @@
                     screenY + screenRadius < -10 || screenY - screenRadius > height + 10) return;
 
                 ctx.save();
-                // 绘制阴影效果
                 ctx.shadowBlur = 15 * scale;
                 ctx.shadowColor = this.color;
                 
@@ -347,11 +327,10 @@
         }
 
         function update() {
-            // 1. 玩家移动与加速
             let speedMultiplier = 1;
             if (isBoosting && player.mass > 500) {
                 speedMultiplier = 1.8;
-                player.mass -= 2; // 加速消耗质量
+                player.mass -= 2;
                 player.updateMass();
             }
 
@@ -369,22 +348,16 @@
             player.x = Math.max(player.radius, Math.min(WORLD_SIZE - player.radius, player.x));
             player.y = Math.max(player.radius, Math.min(WORLD_SIZE - player.radius, player.y));
 
-            // 2. 相机与视野缩放 (改进逻辑：体型越大缩放比例越大)
             cameraX += (player.x - cameraX) * 0.1;
             cameraY += (player.y - cameraY) * 0.1;
             const targetScale = Math.max(0.2, 1.2 / (1 + (player.radius - 25) / 250));
             scale += (targetScale - scale) * 0.03;
 
-            // 3. AI 逻辑增强
             for (let ai of ais) {
-                // 寻找目标：优先吃食物，其次追逐比自己小的球，逃避比自己大的球
                 let target = null;
                 let minDist = Infinity;
-
-                // 简单的感知范围
                 const senseRange = 600;
 
-                // 逃避大球
                 const distToPlayer = Math.hypot(ai.x - player.x, ai.y - player.y);
                 if (distToPlayer < senseRange && player.radius > ai.radius * 1.1) {
                     ai.targetAngle = Math.atan2(ai.y - player.y, ai.x - player.x);
@@ -402,16 +375,13 @@
                 ai.y = Math.max(ai.radius, Math.min(WORLD_SIZE - ai.radius, ai.y));
             }
 
-            // 4. 碰撞检测
             checkCollisions();
             scoreEl.innerText = Math.floor(player.mass / 10);
         }
 
         function checkCollisions() {
-            // 食物碰撞
             for (let i = foods.length - 1; i >= 0; i--) {
                 const f = foods[i];
-                // 玩家吃
                 if (Math.hypot(player.x - f.x, player.y - f.y) < player.radius) {
                     player.mass += f.radius * 2;
                     player.updateMass();
@@ -419,7 +389,6 @@
                     spawnFood();
                     continue;
                 }
-                // AI 吃
                 for (let ai of ais) {
                     if (Math.hypot(ai.x - f.x, ai.y - f.y) < ai.radius) {
                         ai.mass += f.radius * 2;
@@ -431,7 +400,6 @@
                 }
             }
 
-            // 吞噬碰撞
             for (let i = ais.length - 1; i >= 0; i--) {
                 const ai = ais[i];
                 const dist = Math.hypot(player.x - ai.x, player.y - ai.y);
@@ -448,7 +416,6 @@
                 }
             }
 
-            // AI 互相吃
             for (let i = 0; i < ais.length; i++) {
                 for (let j = i + 1; j < ais.length; j++) {
                     const a = ais[i];
@@ -471,7 +438,6 @@
             ctx.fillStyle = '#111';
             ctx.fillRect(0, 0, width, height);
 
-            // 网格
             ctx.strokeStyle = '#222';
             ctx.lineWidth = 1;
             const gridSize = 100 * scale;
@@ -482,7 +448,6 @@
             for (let y = startY; y < height; y += gridSize) { ctx.moveTo(0, y); ctx.lineTo(width, y); }
             ctx.stroke();
 
-            // 边界
             const bL = (0 - cameraX) * scale + width / 2;
             const bT = (0 - cameraY) * scale + height / 2;
             const bS = WORLD_SIZE * scale;
@@ -490,7 +455,6 @@
             ctx.lineWidth = 5;
             ctx.strokeRect(bL, bT, bS, bS);
 
-            // 食物
             for (let f of foods) {
                 const sx = (f.x - cameraX) * scale + width / 2;
                 const sy = (f.y - cameraY) * scale + height / 2;
@@ -513,7 +477,6 @@
             boostBtn.style.display = 'none';
         }
 
-        // 摇杆逻辑
         function updateJoystick(x, y) {
             const rect = joystickContainer.getBoundingClientRect();
             const centerX = rect.left + rect.width / 2;
@@ -532,10 +495,8 @@
             moveY = dy / JOYSTICK_MAX_RADIUS;
         }
 
-        // 事件监听
         window.addEventListener('resize', resize);
         
-        // 摇杆触摸
         joystickContainer.addEventListener('touchstart', (e) => {
             e.preventDefault();
             joystickActive = true;
@@ -544,9 +505,8 @@
 
         window.addEventListener('touchmove', (e) => {
             if (joystickActive) {
-                // 查找属于摇杆的那个触点
                 for (let touch of e.touches) {
-                    if (touch.clientX < width / 2) {
+                    if (touch.clientX > width / 2) {
                         updateJoystick(touch.clientX, touch.clientY);
                         break;
                     }
@@ -555,21 +515,19 @@
         }, { passive: false });
 
         window.addEventListener('touchend', (e) => {
-            if (e.touches.length === 0 || Array.from(e.touches).every(t => t.clientX > width / 2)) {
+            if (e.touches.length === 0 || Array.from(e.touches).every(t => t.clientX < width / 2)) {
                 joystickActive = false;
                 joystickKnob.style.transform = 'translate(-50%, -50%)';
                 moveX = 0; moveY = 0;
             }
         });
 
-        // 加速按钮
         boostBtn.addEventListener('touchstart', (e) => {
             e.preventDefault();
             isBoosting = true;
         }, { passive: false });
         window.addEventListener('touchend', (e) => {
-            // 只有当没有任何触点在右半屏时才停止加速
-            if (Array.from(e.touches).every(t => t.clientX < width / 2)) {
+            if (Array.from(e.touches).every(t => t.clientX > width / 2)) {
                 isBoosting = false;
             }
         });
@@ -577,7 +535,6 @@
         startBtn.addEventListener('click', init);
         restartBtn.addEventListener('click', init);
 
-        // 初始设置
         resize();
     </script>
 </body>
