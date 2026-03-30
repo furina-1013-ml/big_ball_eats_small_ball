@@ -9,69 +9,186 @@
             margin: 0;
             padding: 0;
             overflow: hidden;
-            background-color: #1a1a1a;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #111;
+            font-family: "Microsoft YaHei", -apple-system, sans-serif;
             touch-action: none;
             user-select: none;
         }
         canvas {
             display: block;
         }
+        
+        /* 通用界面样式 */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            color: white;
+        }
+
+        #start-screen {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2c3e50 100%);
+        }
+
+        .menu-content {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 30px;
+            border: 2px solid #3498db;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(52, 152, 219, 0.3);
+        }
+
+        input {
+            padding: 12px 20px;
+            font-size: 18px;
+            border-radius: 10px;
+            border: none;
+            margin-bottom: 20px;
+            width: 200px;
+            text-align: center;
+            outline: none;
+        }
+
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 40px;
+            font-size: 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: bold;
+        }
+        .btn:active {
+            transform: scale(0.95);
+            background: #2980b9;
+        }
+
         #ui {
             position: absolute;
             top: 20px;
             left: 20px;
             color: white;
-            font-size: 18px;
+            font-size: 20px;
             font-weight: bold;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
             pointer-events: none;
+            z-index: 50;
         }
-        #game-over {
+
+        /* 摇杆固定在左下角 */
+        #joystick-container {
             position: fixed;
+            bottom: 40px;
+            left: 40px;
+            width: 140px;
+            height: 140px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            z-index: 60;
+            display: block; /* 始终显示 */
+        }
+        #joystick-knob {
+            position: absolute;
             top: 50%;
             left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.85);
-            color: white;
-            padding: 30px;
-            border-radius: 20px;
-            text-align: center;
-            display: none;
+            width: 60px;
+            height: 60px;
+            background: rgba(52, 152, 219, 0.5);
             border: 2px solid #3498db;
-            box-shadow: 0 0 20px rgba(52, 152, 219, 0.5);
-            z-index: 100;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
         }
-        #game-over h1 {
-            margin: 0 0 20px 0;
-            color: #e74c3c;
-        }
-        #game-over p {
-            font-size: 20px;
-            margin: 10px 0 25px 0;
-        }
-        #restart-btn {
-            background: #3498db;
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            font-size: 18px;
-            border-radius: 25px;
+
+        /* 加速按钮固定在右下角 */
+        #boost-btn {
+            position: fixed;
+            bottom: 60px;
+            right: 60px;
+            width: 80px;
+            height: 80px;
+            background: rgba(241, 196, 15, 0.3);
+            border: 3px solid #f1c40f;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 60;
+            color: #f1c40f;
+            font-size: 40px;
             cursor: pointer;
-            transition: background 0.3s;
+            transition: all 0.1s;
         }
-        #restart-btn:active {
-            background: #2980b9;
+        #boost-btn:active {
+            background: rgba(241, 196, 15, 0.6);
+            transform: scale(0.9);
+        }
+
+        #game-over {
+            display: none;
+        }
+
+        /* 强制横屏提示 */
+        @media screen and (orientation: portrait) {
+            #landscape-msg {
+                display: flex;
+            }
+        }
+        @media screen and (orientation: landscape) {
+            #landscape-msg {
+                display: none;
+            }
+        }
+        #landscape-msg {
+            background: #111;
+            z-index: 200;
+            text-align: center;
+            padding: 20px;
         }
     </style>
 </head>
 <body>
-    <div id="ui">得分: <span id="score">0</span></div>
+    <div id="landscape-msg" class="overlay" style="display: none;">
+        <div style="font-size: 50px; margin-bottom: 20px;">🔄</div>
+        <p>请旋转手机至横屏模式以获得最佳体验</p>
+    </div>
+
+    <div id="start-screen" class="overlay">
+        <div class="menu-content">
+            <h1 style="color: #3498db; margin-top: 0;">球球大作战</h1>
+            <input type="text" id="player-name" placeholder="请输入你的昵称" maxlength="8">
+            <br>
+            <button id="start-btn" class="btn">进入游戏</button>
+        </div>
+    </div>
+
+    <div id="ui" style="display: none;">
+        质量: <span id="score">0</span>
+    </div>
     
-    <div id="game-over">
-        <h1>游戏结束</h1>
-        <p>你的最终质量: <span id="final-score">0</span></p>
-        <button id="restart-btn">重新开始</button>
+    <div id="joystick-container" style="display: none;">
+        <div id="joystick-knob"></div>
+    </div>
+
+    <div id="boost-btn" style="display: none;">⚡</div>
+    
+    <div id="game-over" class="overlay">
+        <div class="menu-content">
+            <h1 style="color: #e74c3c;">游戏结束</h1>
+            <p>你的最终质量: <span id="final-score">0</span></p>
+            <button id="restart-btn" class="btn">重新开始</button>
+        </div>
     </div>
 
     <canvas id="gameCanvas"></canvas>
@@ -83,19 +200,37 @@
         const gameOverEl = document.getElementById('game-over');
         const finalScoreEl = document.getElementById('final-score');
         const restartBtn = document.getElementById('restart-btn');
+        const startScreen = document.getElementById('start-screen');
+        const startBtn = document.getElementById('start-btn');
+        const playerNameInput = document.getElementById('player-name');
+        const joystickContainer = document.getElementById('joystick-container');
+        const joystickKnob = document.getElementById('joystick-knob');
+        const boostBtn = document.getElementById('boost-btn');
+        const uiContainer = document.getElementById('ui');
 
         // 游戏配置
-        const WORLD_SIZE = 3000;
-        const FOOD_COUNT = 300;
-        const AI_COUNT = 15;
+        const WORLD_SIZE = 4000;
+        const FOOD_COUNT = 400;
+        const AI_COUNT = 20;
         const COLORS = ['#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6', '#1abc9c', '#e67e22', '#f39c12'];
         
         let width, height;
         let player, foods, ais;
         let isGameOver = false;
-        let touchX = null, touchY = null;
+        let isStarted = false;
         let cameraX = 0, cameraY = 0;
         let scale = 1;
+
+        // 摇杆控制变量
+        let joystickActive = false;
+        let joystickCenterX = 0;
+        let joystickCenterY = 0;
+        let moveX = 0;
+        let moveY = 0; 
+        const JOYSTICK_MAX_RADIUS = 60;
+
+        // 加速逻辑
+        let isBoosting = false;
 
         class Ball {
             constructor(x, y, radius, color, name = '') {
@@ -107,6 +242,7 @@
                 this.vx = 0;
                 this.vy = 0;
                 this.mass = Math.PI * radius * radius;
+                this.updateMass();
             }
 
             updateMass() {
@@ -115,34 +251,34 @@
             }
 
             draw() {
-                // 转换坐标到屏幕
                 const screenX = (this.x - cameraX) * scale + width / 2;
                 const screenY = (this.y - cameraY) * scale + height / 2;
                 const screenRadius = this.radius * scale;
 
-                // 视口剪裁 (Viewport Culling)
                 if (screenX + screenRadius < -10 || screenX - screenRadius > width + 10 ||
                     screenY + screenRadius < -10 || screenY - screenRadius > height + 10) return;
 
+                ctx.save();
+                // 绘制阴影效果
+                ctx.shadowBlur = 15 * scale;
+                ctx.shadowColor = this.color;
+                
                 ctx.beginPath();
                 ctx.arc(screenX, screenY, screenRadius, 0, Math.PI * 2);
                 ctx.fillStyle = this.color;
                 ctx.fill();
+                ctx.restore();
                 
-                // 绘制描边
-                ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+                ctx.strokeStyle = 'rgba(255,255,255,0.5)';
                 ctx.lineWidth = Math.max(1, 2 * scale);
                 ctx.stroke();
 
-                // 绘制名字
                 if (this.name) {
                     ctx.fillStyle = 'white';
                     ctx.textAlign = 'center';
-                    const fontSize = Math.max(10, screenRadius * 0.4);
-                    if (fontSize > 6) {
-                        ctx.font = `bold ${fontSize}px Arial`;
-                        ctx.fillText(this.name, screenX, screenY + fontSize * 0.35);
-                    }
+                    const fontSize = Math.max(12, screenRadius * 0.35);
+                    ctx.font = `bold ${fontSize}px "Microsoft YaHei"`;
+                    ctx.fillText(this.name, screenX, screenY + fontSize * 0.35);
                 }
             }
         }
@@ -150,37 +286,32 @@
         function init() {
             resize();
             isGameOver = false;
+            isStarted = true;
+            startScreen.style.display = 'none';
             gameOverEl.style.display = 'none';
+            uiContainer.style.display = 'block';
+            joystickContainer.style.display = 'block';
+            boostBtn.style.display = 'flex';
             
-            // 初始化玩家
-            player = new Ball(WORLD_SIZE / 2, WORLD_SIZE / 2, 20, '#3498db', '我');
-            player.updateMass();
+            const pName = playerNameInput.value || '无名小球';
+            player = new Ball(WORLD_SIZE / 2, WORLD_SIZE / 2, 25, '#3498db', pName);
             
-            // 初始化食物
             foods = [];
-            for (let i = 0; i < FOOD_COUNT; i++) {
-                spawnFood();
-            }
+            for (let i = 0; i < FOOD_COUNT; i++) spawnFood();
 
-            // 初始化 AI
             ais = [];
-            for (let i = 0; i < AI_COUNT; i++) {
-                spawnAI();
-            }
+            for (let i = 0; i < AI_COUNT; i++) spawnAI();
 
             cameraX = player.x;
             cameraY = player.y;
-            scoreEl.innerText = Math.floor(player.radius);
             
-            if (!animationFrameId) {
-                animationFrameId = requestAnimationFrame(gameLoop);
-            }
+            if (!animationFrameId) animationFrameId = requestAnimationFrame(gameLoop);
         }
 
         let animationFrameId = null;
 
         function spawnFood() {
-            const r = 4 + Math.random() * 2;
+            const r = 5 + Math.random() * 3;
             foods.push({
                 x: Math.random() * WORLD_SIZE,
                 y: Math.random() * WORLD_SIZE,
@@ -191,15 +322,11 @@
         }
 
         function spawnAI() {
-            const names = ['球王', '无敌', '小可爱', '吞噬者', '萌萌哒', '霸主', '闪电', '飓风'];
-            const x = Math.random() * WORLD_SIZE;
-            const y = Math.random() * WORLD_SIZE;
-            const radius = 15 + Math.random() * 20;
-            const color = COLORS[Math.floor(Math.random() * COLORS.length)];
+            const names = ['球王', '无敌', '小可爱', '吞噬者', '萌萌哒', '霸主', '闪电', '飓风', '猎手', '幻影'];
+            const radius = 20 + Math.random() * 30;
             const name = names[Math.floor(Math.random() * names.length)] + (Math.floor(Math.random()*900) + 100);
-            const ball = new Ball(x, y, radius, color, name);
-            ball.updateMass();
-            ais.push(ball);
+            const ai = new Ball(Math.random() * WORLD_SIZE, Math.random() * WORLD_SIZE, radius, COLORS[Math.floor(Math.random() * COLORS.length)], name);
+            ais.push(ai);
         }
 
         function resize() {
@@ -210,96 +337,92 @@
         }
 
         function gameLoop() {
-            if (isGameOver) {
+            if (!isStarted || isGameOver) {
                 animationFrameId = null;
                 return;
             }
-
             update();
             draw();
             animationFrameId = requestAnimationFrame(gameLoop);
         }
 
         function update() {
-            // 玩家移动逻辑 - 零延迟响应
-            if (touchX !== null && touchY !== null) {
-                const dx = touchX - width / 2;
-                const dy = touchY - height / 2;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                
-                if (dist > 5) {
-                    const angle = Math.atan2(dy, dx);
-                    const speed = Math.max(1.5, 5 - (player.radius / 150)); // 基础速度提高
-                    
-                    player.vx = Math.cos(angle) * speed;
-                    player.vy = Math.sin(angle) * speed;
-                }
+            // 1. 玩家移动与加速
+            let speedMultiplier = 1;
+            if (isBoosting && player.mass > 500) {
+                speedMultiplier = 1.8;
+                player.mass -= 2; // 加速消耗质量
+                player.updateMass();
+            }
+
+            if (joystickActive) {
+                const baseSpeed = Math.max(1.2, 6 - (player.radius / 120));
+                player.vx = moveX * baseSpeed * speedMultiplier;
+                player.vy = moveY * baseSpeed * speedMultiplier;
             } else {
-                player.vx *= 0.92;
-                player.vy *= 0.92;
+                player.vx *= 0.94;
+                player.vy *= 0.94;
             }
 
             player.x += player.vx;
             player.y += player.vy;
-
-            // 边界检查
             player.x = Math.max(player.radius, Math.min(WORLD_SIZE - player.radius, player.x));
             player.y = Math.max(player.radius, Math.min(WORLD_SIZE - player.radius, player.y));
 
-            // 相机平滑跟随
-            cameraX += (player.x - cameraX) * 0.15;
-            cameraY += (player.y - cameraY) * 0.15;
+            // 2. 相机与视野缩放 (改进逻辑：体型越大缩放比例越大)
+            cameraX += (player.x - cameraX) * 0.1;
+            cameraY += (player.y - cameraY) * 0.1;
+            const targetScale = Math.max(0.2, 1.2 / (1 + (player.radius - 25) / 250));
+            scale += (targetScale - scale) * 0.03;
 
-            // 动态缩放 (体型越大视野越广)
-            const targetScale = Math.max(0.35, 1 / (1 + (player.radius - 20) / 400));
-            scale += (targetScale - scale) * 0.05;
+            // 3. AI 逻辑增强
+            for (let ai of ais) {
+                // 寻找目标：优先吃食物，其次追逐比自己小的球，逃避比自己大的球
+                let target = null;
+                let minDist = Infinity;
 
-            // AI 移动逻辑
-            for (let i = 0; i < ais.length; i++) {
-                const ai = ais[i];
-                if (Math.random() < 0.015) {
+                // 简单的感知范围
+                const senseRange = 600;
+
+                // 逃避大球
+                const distToPlayer = Math.hypot(ai.x - player.x, ai.y - player.y);
+                if (distToPlayer < senseRange && player.radius > ai.radius * 1.1) {
+                    ai.targetAngle = Math.atan2(ai.y - player.y, ai.x - player.x);
+                } else if (Math.random() < 0.02) {
                     ai.targetAngle = Math.random() * Math.PI * 2;
                 }
+
                 if (ai.targetAngle === undefined) ai.targetAngle = Math.random() * Math.PI * 2;
                 
-                const speed = Math.max(0.8, 4 - (ai.radius / 150));
-                ai.vx = Math.cos(ai.targetAngle) * speed;
-                ai.vy = Math.sin(ai.targetAngle) * speed;
-                
-                ai.x += ai.vx;
-                ai.y += ai.vy;
+                const aiSpeed = Math.max(0.8, 4.5 - (ai.radius / 120));
+                ai.x += Math.cos(ai.targetAngle) * aiSpeed;
+                ai.y += Math.sin(ai.targetAngle) * aiSpeed;
 
-                if (ai.x < ai.radius || ai.x > WORLD_SIZE - ai.radius) ai.targetAngle = Math.PI - ai.targetAngle;
-                if (ai.y < ai.radius || ai.y > WORLD_SIZE - ai.radius) ai.targetAngle = -ai.targetAngle;
-                
                 ai.x = Math.max(ai.radius, Math.min(WORLD_SIZE - ai.radius, ai.x));
                 ai.y = Math.max(ai.radius, Math.min(WORLD_SIZE - ai.radius, ai.y));
             }
 
-            // 碰撞检测优化: 使用平方距离
-            // 1. 食物碰撞
+            // 4. 碰撞检测
+            checkCollisions();
+            scoreEl.innerText = Math.floor(player.mass / 10);
+        }
+
+        function checkCollisions() {
+            // 食物碰撞
             for (let i = foods.length - 1; i >= 0; i--) {
                 const f = foods[i];
-                
-                // 玩家吃食物
-                const dxP = player.x - f.x;
-                const dyP = player.y - f.y;
-                if (dxP*dxP + dyP*dyP < player.radiusSquared) {
-                    player.mass += Math.PI * f.radiusSquared;
+                // 玩家吃
+                if (Math.hypot(player.x - f.x, player.y - f.y) < player.radius) {
+                    player.mass += f.radius * 2;
                     player.updateMass();
                     foods.splice(i, 1);
                     spawnFood();
-                    scoreEl.innerText = Math.floor(player.radius);
                     continue;
                 }
-                
-                // AI 吃食物
-                for (let j = 0; j < ais.length; j++) {
-                    const ai = ais[j];
-                    const dxA = ai.x - f.x;
-                    const dyA = ai.y - f.y;
-                    if (dxA*dxA + dyA*dyA < ai.radiusSquared) {
-                        ai.mass += Math.PI * f.radiusSquared;
+                // AI 吃
+                for (let ai of ais) {
+                    if (Math.hypot(ai.x - f.x, ai.y - f.y) < ai.radius) {
+                        ai.mass += f.radius * 2;
                         ai.updateMass();
                         foods.splice(i, 1);
                         spawnFood();
@@ -308,46 +431,36 @@
                 }
             }
 
-            // 2. 吞噬碰撞
-            // 玩家与 AI
+            // 吞噬碰撞
             for (let i = ais.length - 1; i >= 0; i--) {
                 const ai = ais[i];
-                const dx = player.x - ai.x;
-                const dy = player.y - ai.y;
-                const distSq = dx * dx + dy * dy;
+                const dist = Math.hypot(player.x - ai.x, player.y - ai.y);
                 
-                if (distSq < player.radiusSquared || distSq < ai.radiusSquared) {
+                if (dist < Math.max(player.radius, ai.radius)) {
                     if (player.radius > ai.radius * 1.1) {
-                        player.mass += ai.mass;
+                        player.mass += ai.mass * 0.8;
                         player.updateMass();
                         ais.splice(i, 1);
                         spawnAI();
-                        scoreEl.innerText = Math.floor(player.radius);
                     } else if (ai.radius > player.radius * 1.1) {
                         gameOver();
                     }
                 }
             }
 
-            // AI 之间互相吞噬
+            // AI 互相吃
             for (let i = 0; i < ais.length; i++) {
                 for (let j = i + 1; j < ais.length; j++) {
                     const a = ais[i];
                     const b = ais[j];
-                    const dx = a.x - b.x;
-                    const dy = a.y - b.y;
-                    const distSq = dx * dx + dy * dy;
-                    if (distSq < a.radiusSquared || distSq < b.radiusSquared) {
+                    const d = Math.hypot(a.x - b.x, a.y - b.y);
+                    if (d < Math.max(a.radius, b.radius)) {
                         if (a.radius > b.radius * 1.1) {
-                            a.mass += b.mass;
-                            a.updateMass();
-                            ais.splice(j, 1);
-                            spawnAI();
+                            a.mass += b.mass * 0.8; a.updateMass();
+                            ais.splice(j, 1); spawnAI();
                         } else if (b.radius > a.radius * 1.1) {
-                            b.mass += a.mass;
-                            b.updateMass();
-                            ais.splice(i, 1);
-                            spawnAI();
+                            b.mass += a.mass * 0.8; b.updateMass();
+                            ais.splice(i, 1); spawnAI();
                         }
                     }
                 }
@@ -355,103 +468,117 @@
         }
 
         function draw() {
-            // 清屏
-            ctx.fillStyle = '#111'; // 更深的背景
+            ctx.fillStyle = '#111';
             ctx.fillRect(0, 0, width, height);
 
-            // 绘制网格线
+            // 网格
             ctx.strokeStyle = '#222';
             ctx.lineWidth = 1;
             const gridSize = 100 * scale;
             const startX = ((-cameraX * scale + width / 2) % gridSize + gridSize) % gridSize;
             const startY = ((-cameraY * scale + height / 2) % gridSize + gridSize) % gridSize;
-
             ctx.beginPath();
-            for (let x = startX; x < width; x += gridSize) {
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, height);
-            }
-            for (let y = startY; y < height; y += gridSize) {
-                ctx.moveTo(0, y);
-                ctx.lineTo(width, y);
-            }
+            for (let x = startX; x < width; x += gridSize) { ctx.moveTo(x, 0); ctx.lineTo(x, height); }
+            for (let y = startY; y < height; y += gridSize) { ctx.moveTo(0, y); ctx.lineTo(width, y); }
             ctx.stroke();
 
-            // 绘制世界边界
-            const borderLeft = (0 - cameraX) * scale + width / 2;
-            const borderTop = (0 - cameraY) * scale + height / 2;
-            const borderSize = WORLD_SIZE * scale;
+            // 边界
+            const bL = (0 - cameraX) * scale + width / 2;
+            const bT = (0 - cameraY) * scale + height / 2;
+            const bS = WORLD_SIZE * scale;
             ctx.strokeStyle = '#3498db';
-            ctx.lineWidth = 3;
-            ctx.strokeRect(borderLeft, borderTop, borderSize, borderSize);
+            ctx.lineWidth = 5;
+            ctx.strokeRect(bL, bT, bS, bS);
 
-            // 绘制食物
-            for (let i = 0; i < foods.length; i++) {
-                const f = foods[i];
-                const screenX = (f.x - cameraX) * scale + width / 2;
-                const screenY = (f.y - cameraY) * scale + height / 2;
-                const r = f.radius * scale;
-                if (screenX + r < 0 || screenX - r > width || screenY + r < 0 || screenY - r > height) continue;
-                
-                ctx.beginPath();
-                ctx.arc(screenX, screenY, r, 0, Math.PI * 2);
-                ctx.fillStyle = f.color;
-                ctx.fill();
+            // 食物
+            for (let f of foods) {
+                const sx = (f.x - cameraX) * scale + width / 2;
+                const sy = (f.y - cameraY) * scale + height / 2;
+                const sr = f.radius * scale;
+                if (sx + sr < 0 || sx - sr > width || sy + sr < 0 || sy - sr > height) continue;
+                ctx.beginPath(); ctx.arc(sx, sy, sr, 0, Math.PI * 2);
+                ctx.fillStyle = f.color; ctx.fill();
             }
 
-            // 绘制 AI
-            for (let i = 0; i < ais.length; i++) ais[i].draw();
-
-            // 绘制玩家
+            for (let ai of ais) ai.draw();
             player.draw();
         }
 
         function gameOver() {
             isGameOver = true;
-            finalScoreEl.innerText = Math.floor(player.radius);
-            gameOverEl.style.display = 'block';
+            finalScoreEl.innerText = Math.floor(player.mass / 10);
+            gameOverEl.style.display = 'flex';
+            uiContainer.style.display = 'none';
+            joystickContainer.style.display = 'none';
+            boostBtn.style.display = 'none';
+        }
+
+        // 摇杆逻辑
+        function updateJoystick(x, y) {
+            const rect = joystickContainer.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            let dx = x - centerX;
+            let dy = y - centerY;
+            const dist = Math.hypot(dx, dy);
+            
+            if (dist > JOYSTICK_MAX_RADIUS) {
+                dx = (dx / dist) * JOYSTICK_MAX_RADIUS;
+                dy = (dy / dist) * JOYSTICK_MAX_RADIUS;
+            }
+            
+            joystickKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+            moveX = dx / JOYSTICK_MAX_RADIUS;
+            moveY = dy / JOYSTICK_MAX_RADIUS;
         }
 
         // 事件监听
         window.addEventListener('resize', resize);
         
-        canvas.addEventListener('touchstart', (e) => {
+        // 摇杆触摸
+        joystickContainer.addEventListener('touchstart', (e) => {
             e.preventDefault();
-            touchX = e.touches[0].clientX;
-            touchY = e.touches[0].clientY;
+            joystickActive = true;
+            updateJoystick(e.touches[0].clientX, e.touches[0].clientY);
         }, { passive: false });
 
-        canvas.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-            touchX = e.touches[0].clientX;
-            touchY = e.touches[0].clientY;
+        window.addEventListener('touchmove', (e) => {
+            if (joystickActive) {
+                // 查找属于摇杆的那个触点
+                for (let touch of e.touches) {
+                    if (touch.clientX < width / 2) {
+                        updateJoystick(touch.clientX, touch.clientY);
+                        break;
+                    }
+                }
+            }
         }, { passive: false });
 
-        canvas.addEventListener('touchend', () => {
-            touchX = null;
-            touchY = null;
-        });
-
-        // 鼠标测试支持
-        canvas.addEventListener('mousedown', (e) => {
-            touchX = e.clientX;
-            touchY = e.clientY;
-        });
-        window.addEventListener('mousemove', (e) => {
-            if (touchX !== null) {
-                touchX = e.clientX;
-                touchY = e.clientY;
+        window.addEventListener('touchend', (e) => {
+            if (e.touches.length === 0 || Array.from(e.touches).every(t => t.clientX > width / 2)) {
+                joystickActive = false;
+                joystickKnob.style.transform = 'translate(-50%, -50%)';
+                moveX = 0; moveY = 0;
             }
         });
-        window.addEventListener('mouseup', () => {
-            touchX = null;
-            touchY = null;
+
+        // 加速按钮
+        boostBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            isBoosting = true;
+        }, { passive: false });
+        window.addEventListener('touchend', (e) => {
+            // 只有当没有任何触点在右半屏时才停止加速
+            if (Array.from(e.touches).every(t => t.clientX < width / 2)) {
+                isBoosting = false;
+            }
         });
 
+        startBtn.addEventListener('click', init);
         restartBtn.addEventListener('click', init);
 
-        // 启动
-        init();
+        // 初始设置
+        resize();
     </script>
 </body>
 </html>
