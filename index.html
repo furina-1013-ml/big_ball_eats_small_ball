@@ -193,8 +193,8 @@
 
         // 游戏配置
         const WORLD_SIZE = 4000;
-        const FOOD_COUNT = 400;
-        const AI_COUNT = 20;
+        const FOOD_COUNT = 500; // 增加食物数量
+        const AI_COUNT = 15;    // 减少初始 AI 数量
         const COLORS = ['#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6', '#1abc9c', '#e67e22', '#f39c12'];
         
         let width, height;
@@ -274,7 +274,7 @@
             boostBtn.style.display = 'flex';
             
             const pName = playerNameInput.value || '无名小球';
-            player = new Ball(WORLD_SIZE / 2, WORLD_SIZE / 2, 25, '#3498db', pName);
+            player = new Ball(WORLD_SIZE / 2, WORLD_SIZE / 2, 35, '#3498db', pName); // 初始半径从 25 增加到 35
             
             foods = [];
             for (let i = 0; i < FOOD_COUNT; i++) spawnFood();
@@ -303,7 +303,7 @@
 
         function spawnAI() {
             const names = ['球王', '无敌', '小可爱', '吞噬者', '萌萌哒', '霸主', '闪电', '飓风', '猎手', '幻影'];
-            const radius = 20 + Math.random() * 30;
+            const radius = 15 + Math.random() * 20; // 初始半径从 20-50 降低到 15-35
             const name = names[Math.floor(Math.random() * names.length)] + (Math.floor(Math.random()*900) + 100);
             const ai = new Ball(Math.random() * WORLD_SIZE, Math.random() * WORLD_SIZE, radius, COLORS[Math.floor(Math.random() * COLORS.length)], name);
             ais.push(ai);
@@ -335,7 +335,7 @@
             }
 
             if (joystickActive) {
-                const baseSpeed = Math.max(1.2, 6 - (player.radius / 120));
+                const baseSpeed = Math.max(1.5, 7 - (player.radius / 100)); // 提高初始基础速度
                 player.vx = moveX * baseSpeed * speedMultiplier;
                 player.vy = moveY * baseSpeed * speedMultiplier;
             } else {
@@ -376,14 +376,14 @@
             }
 
             checkCollisions();
-            scoreEl.innerText = Math.floor(player.mass / 10);
+            scoreEl.innerText = Math.floor(player.radius); // 分数显示半径，更直观
         }
 
         function checkCollisions() {
             for (let i = foods.length - 1; i >= 0; i--) {
                 const f = foods[i];
                 if (Math.hypot(player.x - f.x, player.y - f.y) < player.radius) {
-                    player.mass += f.radius * 2;
+                    player.mass += f.radius * 8; // 增加食物带来的质量，从 2 增加到 8
                     player.updateMass();
                     foods.splice(i, 1);
                     spawnFood();
@@ -391,7 +391,7 @@
                 }
                 for (let ai of ais) {
                     if (Math.hypot(ai.x - f.x, ai.y - f.y) < ai.radius) {
-                        ai.mass += f.radius * 2;
+                        ai.mass += f.radius * 6; // AI 吃食物增长稍慢一点
                         ai.updateMass();
                         foods.splice(i, 1);
                         spawnFood();
@@ -404,13 +404,13 @@
                 const ai = ais[i];
                 const dist = Math.hypot(player.x - ai.x, player.y - ai.y);
                 
-                if (dist < Math.max(player.radius, ai.radius)) {
-                    if (player.radius > ai.radius * 1.1) {
-                        player.mass += ai.mass * 0.8;
+                if (dist < player.radius + ai.radius * 0.5) { // 优化碰撞判定，重叠一半即可吞噬
+                    if (player.radius > ai.radius * 1.05) { // 只要比 AI 大 5% 就能吃
+                        player.mass += ai.mass * 0.9; // 吞噬 AI 获得更多质量
                         player.updateMass();
                         ais.splice(i, 1);
                         spawnAI();
-                    } else if (ai.radius > player.radius * 1.1) {
+                    } else if (ai.radius > player.radius * 1.15) { // AI 需要比玩家大 15% 才能吃玩家
                         gameOver();
                     }
                 }
